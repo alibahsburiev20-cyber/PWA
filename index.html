@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Мой PWA</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000000">
+  <style>
+    body { 
+      font-family: sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      text-align: center; 
+      background: #f0f0f0;
+    }
+    h1 { color: #333; }
+  </style>
+</head>
+<body>
+  <h1>Привет!</h1>
+  <p>Это самый простой PWA</p>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('Service Worker зарегистрирован'))
+        .catch(err => console.log('Ошибка SW:', err));
+    }
+  </script>
+</body>
+</html>
