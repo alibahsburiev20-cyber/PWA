@@ -3,181 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Umu Messenger</title>
+    <title>umu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Основные стили для мобильной адаптации */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body, html {
-            height: 100%;
-            background-color: #f0f2f5;
-        }
-
-        #app {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            max-width: 600px; /* Ограничение для десктопа, на мобилках будет 100% */
-            margin: 0 auto;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        /* Шапка */
-        header {
-            background-color: #075e54;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        /* Область сообщений */
-        #chat-window {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); /* Типичный фон мессенджера */
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            position: relative;
-        }
-
-        .message.sent {
-            align-self: flex-end;
-            background-color: #dcf8c6;
-        }
-
-        .message.received {
-            align-self: flex-start;
-            background-color: white;
-            border: 1px solid #ddd;
-        }
-
-        .message-time {
-            font-size: 0.7rem;
-            color: #888;
-            display: block;
-            text-align: right;
-            margin-top: 4px;
-        }
-
-        /* Поле ввода */
-        footer {
-            padding: 10px;
-            background: #eee;
-            display: flex;
-            gap: 10px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 25px;
-            outline: none;
-        }
-
-        button {
-            background-color: #075e54;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:active {
-            background-color: #128c7e;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .message-bubble { max-width: 75%; padding: 12px 16px; border-radius: 20px; }
+        .sent { background-color: #10b981; color: white; border-bottom-right-radius: 4px; }
+        .received { background-color: #27272a; color: white; border-bottom-left-radius: 4px; }
+        .chat-item:hover { background-color: #27272a; }
+        .messages-container { scrollbar-width: thin; scrollbar-color: #3b82f6 #18181b; }
     </style>
 </head>
-<body>
-
-<div id="app">
-    <header>Umu Messenger</header>
-    
-    <div id="chat-window">
+<body class="bg-zinc-950 text-white h-screen overflow-hidden flex">
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col md:translate-x-0 transition-transform duration-300 absolute md:relative h-full z-50">
+        <!-- Header -->
+        <div class="p-4 border-b border-zinc-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center text-xl font-bold">u</div>
+                <span class="text-3xl font-semibold tracking-tighter">umu</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSidebar()" class="md:hidden p-2"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
         </div>
 
-    <footer>
-        <input type="text" id="message-input" placeholder="Введите сообщение..." autocomplete="off">
-        <button id="send-btn">ОТПР.</button>
-    </footer>
-</div>
+        <!-- Search -->
+        <div class="p-4">
+            <div class="relative">
+                <input id="search-input" type="text" onkeyup="filterChats()" 
+                       class="w-full bg-zinc-800 border border-zinc-700 rounded-3xl py-3 px-5 pl-12 focus:outline-none focus:border-blue-500 text-sm"
+                       placeholder="Поиск">
+                <i class="fa-solid fa-magnifying-glass absolute left-5 top-3.5 text-zinc-500"></i>
+            </div>
+        </div>
 
-<script>
-    const chatWindow = document.getElementById('chat-window');
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
+        <!-- New chat -->
+        <div class="px-4 pb-2">
+            <button onclick="showNewChatModal()" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 transition-colors py-3 rounded-3xl font-medium flex items-center justify-center gap-2">
+                <i class="fa-solid fa-plus"></i>
+                Новый чат
+            </button>
+        </div>
 
-    // 1. Загрузка сообщений из локального хранилища
-    let messages = JSON.parse(localStorage.getItem('umu_messages')) || [];
+        <!-- Chats list -->
+        <div id="chats-list" class="flex-1 overflow-y-auto"></div>
+    </div>
 
-    function renderMessages() {
-        chatWindow.innerHTML = '';
-        messages.forEach((msg) => {
-            const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message', 'sent'); // Пока все "отправленные"
-            
-            msgDiv.innerHTML = `
-                ${msg.text}
-                <span class="message-time">${msg.time}</span>
-            `;
-            chatWindow.appendChild(msgDiv);
-        });
-        // Прокрутка вниз
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
+    <!-- MAIN CHAT AREA -->
+    <div class="flex-1 flex flex-col">
+        <!-- Chat header -->
+        <div id="chat-header" class="h-16 bg-zinc-900 border-b border-zinc-800 px-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="md:hidden mr-3"><i class="fa-solid fa-bars text-2xl"></i></button>
+                <div id="header-avatar" class="w-9 h-9 rounded-2xl overflow-hidden"></div>
+                <div>
+                    <div id="header-name" class="font-semibold"></div>
+                    <div id="header-status" class="text-green-500 text-xs flex items-center gap-1">
+                        <span class="w-2 h-2 bg-green-500 rounded-full"></span> онлайн
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-5 text-zinc-400">
+                <i class="fa-solid fa-phone cursor-pointer hover:text-white"></i>
+                <i class="fa-solid fa-video cursor-pointer hover:text-white"></i>
+                <i class="fa-solid fa-ellipsis-v cursor-pointer hover:text-white"></i>
+            </div>
+        </div>
 
-    // 2. Функция отправки
-    function sendMessage() {
-        const text = messageInput.value.trim();
-        if (text !== "") {
+        <!-- Messages -->
+        <div id="messages-container" class="flex-1 overflow-y-auto messages-container p-4 space-y-3 bg-[url('https://picsum.photos/id/1015/2000/1200')] bg-cover">
+        </div>
+
+        <!-- Input area -->
+        <div class="bg-zinc-900 border-t border-zinc-800 p-4">
+            <div class="flex items-center gap-2 bg-zinc-800 rounded-3xl px-5 py-2">
+                <button class="text-2xl text-zinc-400 hover:text-white"><i class="fa-regular fa-face-smile"></i></button>
+                <input id="message-input" type="text" 
+                       class="flex-1 bg-transparent outline-none text-sm placeholder-zinc-500"
+                       placeholder="Сообщение" onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button onclick="sendMessage()" class="text-green-500 hover:text-green-400 text-2xl">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW CHAT MODAL -->
+    <div id="new-chat-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
+        <div class="bg-zinc-900 rounded-3xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
+                <div class="font-semibold">Новый чат</div>
+                <button onclick="hideNewChatModal()" class="text-2xl">×</button>
+            </div>
+            <div id="contacts-list" class="max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script already loaded
+        let chats = [];
+        let currentChatId = null;
+        const fakeContacts = [
+            {id: 101, name: "Анна Смирнова", avatar: "https://i.pravatar.cc/150?u=anna"},
+            {id: 102, name: "Дмитрий Ковалёв", avatar: "https://i.pravatar.cc/150?u=dima"},
+            {id: 103, name: "Екатерина Морозова", avatar: "https://i.pravatar.cc/150?u=kate"},
+            {id: 104, name: "Максим Петров", avatar: "https://i.pravatar.cc/150?u=max"}
+        ];
+        const fakeReplies = ["Окей, понял", "Хорошо!", "Завтра в 15:00?", "👍", "Согласен", "Прикольно", "Позвони мне", "Скоро буду"];
+
+        function loadData() {
+            const saved = localStorage.getItem('umu_chats');
+            if (saved) chats = JSON.parse(saved);
+            else {
+                chats = [
+                    {
+                        id: 1,
+                        name: "Алексей Иванов",
+                        avatar: "https://i.pravatar.cc/150?u=alex",
+                        lastMsg: "Встреча в понедельник",
+                        time: "14:22",
+                        unread: 3,
+                        messages: [
+                            {id: 1, text: "Привет! Как прошёл день?", time: "13:45", isMine: false},
+                            {id: 2, text: "Отлично, спасибо!", time: "13:47", isMine: true},
+                            {id: 3, text: "Встреча в понедельник", time: "14:22", isMine: false}
+                        ]
+                    },
+                    {
+                        id: 2,
+                        name: "Ольга Васильева",
+                        avatar: "https://i.pravatar.cc/150?u=olga",
+                        lastMsg: "Спасибо за помощь",
+                        time: "12:09",
+                        unread: 0,
+                        messages: [
+                            {id: 1, text: "Спасибо за помощь", time: "12:09", isMine: false}
+                        ]
+                    }
+                ];
+                saveData();
+            }
+            renderChats();
+        }
+
+        function saveData() {
+            localStorage.setItem('umu_chats', JSON.stringify(chats));
+        }
+
+        function renderChats(filteredChats = chats) {
+            const container = document.getElementById('chats-list');
+            container.innerHTML = '';
+            filteredChats.forEach(chat => {
+                const div = document.createElement('div');
+                div.className = `chat-item flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-zinc-800 ${currentChatId === chat.id ? 'bg-zinc-800' : ''}`;
+                div.innerHTML = `
+                    <img src="${chat.avatar}" class="w-12 h-12 rounded-2xl object-cover">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between">
+                            <div class="font-medium truncate">${chat.name}</div>
+                            <div class="text-xs text-zinc-500">${chat.time}</div>
+                        </div>
+                        <div class="text-sm text-zinc-400 truncate">${chat.lastMsg}</div>
+                    </div>
+                    \( {chat.unread ? `<div class="bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center"> \){chat.unread}</div>` : ''}
+                `;
+                div.onclick = () => selectChat(chat.id);
+                container.appendChild(div);
+            });
+        }
+
+        function filterChats() {
+            const term = document.getElementById('search-input').value.toLowerCase();
+            const filtered = chats.filter(c => c.name.toLowerCase().includes(term));
+            renderChats(filtered);
+        }
+
+        function selectChat(id) {
+            currentChatId = id;
+            const chat = chats.find(c => c.id === id);
+            if (!chat) return;
+
+            // Header
+            document.getElementById('header-avatar').innerHTML = `<img src="${chat.avatar}" class="w-full h-full object-cover">`;
+            document.getElementById('header-name').textContent = chat.name;
+
+            // Messages
+            const msgContainer = document.getElementById('messages-container');
+            msgContainer.innerHTML = '';
+            chat.messages.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = `flex ${msg.isMine ? 'justify-end' : 'justify-start'}`;
+                bubble.innerHTML = `
+                    <div class="message-bubble ${msg.isMine ? 'sent' : 'received'}">
+                        <div>${msg.text}</div>
+                        <div class="text-[10px] opacity-75 mt-1 text-right">${msg.time}</div>
+                    </div>
+                `;
+                msgContainer.appendChild(bubble);
+            });
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+
+            renderChats();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if (!text || !currentChatId) return;
+
+            const chat = chats.find(c => c.id === currentChatId);
+            if (!chat) return;
+
             const now = new Date();
-            const timeString = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
-            
-            const newMessage = {
+            const time = `\( {now.getHours().toString().padStart(2,'0')}: \){now.getMinutes().toString().padStart(2,'0')}`;
+
+            chat.messages.push({
+                id: Date.now(),
                 text: text,
-                time: timeString
-            };
+                time: time,
+                isMine: true
+            });
+            chat.lastMsg = text.length > 30 ? text.substring(0,27)+'...' : text;
+            chat.time = time;
 
-            messages.push(newMessage);
-            localStorage.setItem('umu_messages', JSON.stringify(messages));
-            
-            messageInput.value = '';
-            renderMessages();
+            saveData();
+            selectChat(currentChatId); // refresh
+            input.value = '';
+
+            // Simulate reply
+            setTimeout(() => {
+                if (currentChatId !== chat.id) return;
+                const replyText = fakeReplies[Math.floor(Math.random() * fakeReplies.length)];
+                const replyTime = `\( {now.getHours().toString().padStart(2,'0')}: \){(now.getMinutes()+1).toString().padStart(2,'0')}`;
+
+                chat.messages.push({
+                    id: Date.now() + 1,
+                    text: replyText,
+                    time: replyTime,
+                    isMine: false
+                });
+                chat.lastMsg = replyText;
+                chat.time = replyTime;
+                saveData();
+                selectChat(currentChatId);
+            }, 1200 + Math.random() * 800);
         }
-    }
 
-    // Обработчики событий
-    sendBtn.addEventListener('click', sendMessage);
-
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendMessage();
+        function showNewChatModal() {
+            const container = document.getElementById('contacts-list');
+            container.innerHTML = '';
+            fakeContacts.forEach(contact => {
+                if (chats.find(c => c.name === contact.name)) return;
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-3 px-6 py-4 hover:bg-zinc-800 cursor-pointer';
+                div.innerHTML = `
+                    <img src="${contact.avatar}" class="w-12 h-12 rounded-2xl">
+                    <div class="font-medium">${contact.name}</div>
+                `;
+                div.onclick = () => {
+                    const newChat = {
+                        id: Date.now(),
+                        name: contact.name,
+                        avatar: contact.avatar,
+                        lastMsg: "Новый чат",
+                        time: "сейчас",
+                        unread: 0,
+                        messages: []
+                    };
+                    chats.unshift(newChat);
+                    saveData();
+                    hideNewChatModal();
+                    selectChat(newChat.id);
+                };
+                container.appendChild(div);
+            });
+            document.getElementById('new-chat-modal').classList.remove('hidden');
         }
-    });
 
-    // Первоначальный рендеринг
-    renderMessages();
-</script>
+        function hideNewChatModal() {
+            document.getElementById('new-chat-modal').classList.add('hidden');
+        }
 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        // Init
+        window.onload = () => {
+            loadData();
+            // Open first chat by default
+            if (chats.length > 0) selectChat(chats[0].id);
+        };
+    </script>
 </body>
 </html>
