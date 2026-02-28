@@ -1,304 +1,157 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>umu</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-        body { font-family: 'Inter', system-ui, sans-serif; }
-        .message-bubble { max-width: 75%; padding: 12px 16px; border-radius: 20px; }
-        .sent { background-color: #10b981; color: white; border-bottom-right-radius: 4px; }
-        .received { background-color: #27272a; color: white; border-bottom-left-radius: 4px; }
-        .chat-item:hover { background-color: #27272a; }
-        .messages-container { scrollbar-width: thin; scrollbar-color: #3b82f6 #18181b; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TON Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="bg-zinc-950 text-white h-screen overflow-hidden flex">
-    <!-- SIDEBAR -->
-    <div id="sidebar" class="w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col md:translate-x-0 transition-transform duration-300 absolute md:relative h-full z-50">
-        <!-- Header -->
-        <div class="p-4 border-b border-zinc-800 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center text-xl font-bold">u</div>
-                <span class="text-3xl font-semibold tracking-tighter">umu</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="toggleSidebar()" class="md:hidden p-2"><i class="fa-solid fa-xmark text-2xl"></i></button>
-            </div>
+<body>
+
+  <!-- Animated background -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Noise overlay -->
+  <div class="noise"></div>
+
+  <main class="container">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <svg class="ton-icon" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M28 56C43.464 56 56 43.464 56 28C56 12.536 43.464 0 28 0C12.536 0 0 12.536 0 28C0 43.464 12.536 56 28 56Z" fill="#0098EA"/>
+          <path d="M37.5603 15.6277H18.4386C14.9228 15.6277 12.7569 19.451 14.5345 22.4662L26.2951 42.8283C27.0824 44.1668 29.0091 44.1668 29.7964 42.8283L41.5569 22.4662C43.3346 19.4511 41.1761 15.6277 37.5603 15.6277ZM26.2175 39.1316L23.1601 33.8959L16.5956 22.4662C15.8584 21.2083 16.7467 19.6069 18.4386 19.6069H26.2175V39.1316ZM39.4973 22.4662L32.9328 33.8959L29.8754 39.1316V19.6069H37.5603C39.2522 19.6069 40.1405 21.2083 39.4973 22.4662Z" fill="white"/>
+        </svg>
+        <span>TON Connect</span>
+      </div>
+      <div class="network-badge">Mainnet</div>
+    </header>
+
+    <!-- Hero section -->
+    <section class="hero">
+      <div class="hero-glow"></div>
+      <h1 class="hero-title">
+        Подключи<br/>
+        <span class="gradient-text">TON Кошелёк</span>
+      </h1>
+      <p class="hero-subtitle">
+        Безопасное подключение через TON Connect.<br/>
+        Поддержка Tonkeeper, MyTonWallet и других.
+      </p>
+    </section>
+
+    <!-- Wallet card -->
+    <section class="wallet-card" id="wallet-card">
+
+      <!-- DISCONNECTED STATE -->
+      <div class="state" id="state-disconnected">
+        <div class="wallets-grid">
+          <button class="wallet-btn" data-wallet="tonkeeper" onclick="connectWallet('tonkeeper')">
+            <img src="https://tonkeeper.com/assets/tonconnect-icon.png" alt="Tonkeeper" class="wallet-logo" onerror="this.src='https://raw.githubusercontent.com/tonkeeper/tonkeeper-web/main/apps/web/public/icon.png'" />
+            <span class="wallet-name">Tonkeeper</span>
+            <span class="wallet-label">Популярный</span>
+          </button>
+          <button class="wallet-btn" data-wallet="mytonwallet" onclick="connectWallet('mytonwallet')">
+            <img src="https://mytonwallet.io/icon-256.png" alt="MyTonWallet" class="wallet-logo" />
+            <span class="wallet-name">MyTonWallet</span>
+            <span class="wallet-label">Открытый</span>
+          </button>
+          <button class="wallet-btn" data-wallet="tonhub" onclick="connectWallet('tonhub')">
+            <img src="https://tonhub.com/tonhub-icon.png" alt="Tonhub" class="wallet-logo" onerror="this.src='https://avatars.githubusercontent.com/u/88044458'" />
+            <span class="wallet-name">Tonhub</span>
+            <span class="wallet-label">Web3</span>
+          </button>
+          <button class="wallet-btn" data-wallet="openmask" onclick="connectWallet('openmask')">
+            <img src="https://raw.githubusercontent.com/OpenProduct/openmask-extension/main/public/icons/icon128.png" alt="OpenMask" class="wallet-logo" />
+            <span class="wallet-name">OpenMask</span>
+            <span class="wallet-label">Браузер</span>
+          </button>
         </div>
 
-        <!-- Search -->
-        <div class="p-4">
-            <div class="relative">
-                <input id="search-input" type="text" onkeyup="filterChats()" 
-                       class="w-full bg-zinc-800 border border-zinc-700 rounded-3xl py-3 px-5 pl-12 focus:outline-none focus:border-blue-500 text-sm"
-                       placeholder="Поиск">
-                <i class="fa-solid fa-magnifying-glass absolute left-5 top-3.5 text-zinc-500"></i>
-            </div>
+        <div class="divider"><span>или</span></div>
+
+        <button class="btn-primary" id="connect-btn" onclick="showQR()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/></svg>
+          Подключить через QR
+        </button>
+      </div>
+
+      <!-- QR STATE -->
+      <div class="state hidden" id="state-qr">
+        <button class="back-btn" onclick="showDisconnected()">← Назад</button>
+        <h3 class="qr-title">Сканируй QR-код</h3>
+        <p class="qr-sub">Открой TON-кошелёк и отсканируй код ниже</p>
+        <div class="qr-wrapper">
+          <div class="qr-placeholder" id="qr-container">
+            <div class="qr-spinner"></div>
+          </div>
         </div>
+        <p class="qr-hint">Ожидание подключения...</p>
+      </div>
 
-        <!-- New chat -->
-        <div class="px-4 pb-2">
-            <button onclick="showNewChatModal()" 
-                    class="w-full bg-blue-600 hover:bg-blue-700 transition-colors py-3 rounded-3xl font-medium flex items-center justify-center gap-2">
-                <i class="fa-solid fa-plus"></i>
-                Новый чат
-            </button>
+      <!-- CONNECTED STATE -->
+      <div class="state hidden" id="state-connected">
+        <div class="connected-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="36" height="36"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-
-        <!-- Chats list -->
-        <div id="chats-list" class="flex-1 overflow-y-auto"></div>
-    </div>
-
-    <!-- MAIN CHAT AREA -->
-    <div class="flex-1 flex flex-col">
-        <!-- Chat header -->
-        <div id="chat-header" class="h-16 bg-zinc-900 border-b border-zinc-800 px-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="md:hidden mr-3"><i class="fa-solid fa-bars text-2xl"></i></button>
-                <div id="header-avatar" class="w-9 h-9 rounded-2xl overflow-hidden"></div>
-                <div>
-                    <div id="header-name" class="font-semibold"></div>
-                    <div id="header-status" class="text-green-500 text-xs flex items-center gap-1">
-                        <span class="w-2 h-2 bg-green-500 rounded-full"></span> онлайн
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center gap-5 text-zinc-400">
-                <i class="fa-solid fa-phone cursor-pointer hover:text-white"></i>
-                <i class="fa-solid fa-video cursor-pointer hover:text-white"></i>
-                <i class="fa-solid fa-ellipsis-v cursor-pointer hover:text-white"></i>
-            </div>
+        <h3 class="connected-title">Кошелёк подключён!</h3>
+        <div class="address-box">
+          <span class="address-label">Адрес</span>
+          <span class="address-value" id="wallet-address">-</span>
+          <button class="copy-btn" onclick="copyAddress()" title="Копировать">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
         </div>
-
-        <!-- Messages -->
-        <div id="messages-container" class="flex-1 overflow-y-auto messages-container p-4 space-y-3 bg-[url('https://picsum.photos/id/1015/2000/1200')] bg-cover">
+        <div class="balance-box">
+          <span class="balance-label">Баланс</span>
+          <span class="balance-value" id="wallet-balance">Загрузка...</span>
         </div>
+        <button class="btn-danger" onclick="disconnectWallet()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Отключить кошелёк
+        </button>
+      </div>
 
-        <!-- Input area -->
-        <div class="bg-zinc-900 border-t border-zinc-800 p-4">
-            <div class="flex items-center gap-2 bg-zinc-800 rounded-3xl px-5 py-2">
-                <button class="text-2xl text-zinc-400 hover:text-white"><i class="fa-regular fa-face-smile"></i></button>
-                <input id="message-input" type="text" 
-                       class="flex-1 bg-transparent outline-none text-sm placeholder-zinc-500"
-                       placeholder="Сообщение" onkeypress="if(event.key === 'Enter') sendMessage()">
-                <button onclick="sendMessage()" class="text-green-500 hover:text-green-400 text-2xl">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+      <div class="feature">
+        <div class="feature-icon">🔒</div>
+        <div>
+          <strong>Безопасно</strong>
+          <p>Твои ключи никогда не покидают кошелёк</p>
         </div>
-    </div>
-
-    <!-- NEW CHAT MODAL -->
-    <div id="new-chat-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
-        <div class="bg-zinc-900 rounded-3xl w-full max-w-md mx-4 overflow-hidden">
-            <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
-                <div class="font-semibold">Новый чат</div>
-                <button onclick="hideNewChatModal()" class="text-2xl">×</button>
-            </div>
-            <div id="contacts-list" class="max-h-96 overflow-y-auto"></div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <div>
+          <strong>Быстро</strong>
+          <p>Подключение за секунды через TON Connect 2.0</p>
         </div>
-    </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌐</div>
+        <div>
+          <strong>Совместимо</strong>
+          <p>Работает со всеми популярными TON кошельками</p>
+        </div>
+      </div>
+    </section>
 
-    <script>
-        // Tailwind script already loaded
-        let chats = [];
-        let currentChatId = null;
-        const fakeContacts = [
-            {id: 101, name: "Анна Смирнова", avatar: "https://i.pravatar.cc/150?u=anna"},
-            {id: 102, name: "Дмитрий Ковалёв", avatar: "https://i.pravatar.cc/150?u=dima"},
-            {id: 103, name: "Екатерина Морозова", avatar: "https://i.pravatar.cc/150?u=kate"},
-            {id: 104, name: "Максим Петров", avatar: "https://i.pravatar.cc/150?u=max"}
-        ];
-        const fakeReplies = ["Окей, понял", "Хорошо!", "Завтра в 15:00?", "👍", "Согласен", "Прикольно", "Позвони мне", "Скоро буду"];
+    <footer class="footer">
+      <p>Powered by <a href="https://ton.org" target="_blank">TON Blockchain</a> · TON Connect 2.0</p>
+    </footer>
 
-        function loadData() {
-            const saved = localStorage.getItem('umu_chats');
-            if (saved) chats = JSON.parse(saved);
-            else {
-                chats = [
-                    {
-                        id: 1,
-                        name: "Алексей Иванов",
-                        avatar: "https://i.pravatar.cc/150?u=alex",
-                        lastMsg: "Встреча в понедельник",
-                        time: "14:22",
-                        unread: 3,
-                        messages: [
-                            {id: 1, text: "Привет! Как прошёл день?", time: "13:45", isMine: false},
-                            {id: 2, text: "Отлично, спасибо!", time: "13:47", isMine: true},
-                            {id: 3, text: "Встреча в понедельник", time: "14:22", isMine: false}
-                        ]
-                    },
-                    {
-                        id: 2,
-                        name: "Ольга Васильева",
-                        avatar: "https://i.pravatar.cc/150?u=olga",
-                        lastMsg: "Спасибо за помощь",
-                        time: "12:09",
-                        unread: 0,
-                        messages: [
-                            {id: 1, text: "Спасибо за помощь", time: "12:09", isMine: false}
-                        ]
-                    }
-                ];
-                saveData();
-            }
-            renderChats();
-        }
+  </main>
 
-        function saveData() {
-            localStorage.setItem('umu_chats', JSON.stringify(chats));
-        }
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
 
-        function renderChats(filteredChats = chats) {
-            const container = document.getElementById('chats-list');
-            container.innerHTML = '';
-            filteredChats.forEach(chat => {
-                const div = document.createElement('div');
-                div.className = `chat-item flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-zinc-800 ${currentChatId === chat.id ? 'bg-zinc-800' : ''}`;
-                div.innerHTML = `
-                    <img src="${chat.avatar}" class="w-12 h-12 rounded-2xl object-cover">
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between">
-                            <div class="font-medium truncate">${chat.name}</div>
-                            <div class="text-xs text-zinc-500">${chat.time}</div>
-                        </div>
-                        <div class="text-sm text-zinc-400 truncate">${chat.lastMsg}</div>
-                    </div>
-                    \( {chat.unread ? `<div class="bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center"> \){chat.unread}</div>` : ''}
-                `;
-                div.onclick = () => selectChat(chat.id);
-                container.appendChild(div);
-            });
-        }
-
-        function filterChats() {
-            const term = document.getElementById('search-input').value.toLowerCase();
-            const filtered = chats.filter(c => c.name.toLowerCase().includes(term));
-            renderChats(filtered);
-        }
-
-        function selectChat(id) {
-            currentChatId = id;
-            const chat = chats.find(c => c.id === id);
-            if (!chat) return;
-
-            // Header
-            document.getElementById('header-avatar').innerHTML = `<img src="${chat.avatar}" class="w-full h-full object-cover">`;
-            document.getElementById('header-name').textContent = chat.name;
-
-            // Messages
-            const msgContainer = document.getElementById('messages-container');
-            msgContainer.innerHTML = '';
-            chat.messages.forEach(msg => {
-                const bubble = document.createElement('div');
-                bubble.className = `flex ${msg.isMine ? 'justify-end' : 'justify-start'}`;
-                bubble.innerHTML = `
-                    <div class="message-bubble ${msg.isMine ? 'sent' : 'received'}">
-                        <div>${msg.text}</div>
-                        <div class="text-[10px] opacity-75 mt-1 text-right">${msg.time}</div>
-                    </div>
-                `;
-                msgContainer.appendChild(bubble);
-            });
-            msgContainer.scrollTop = msgContainer.scrollHeight;
-
-            renderChats();
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if (!text || !currentChatId) return;
-
-            const chat = chats.find(c => c.id === currentChatId);
-            if (!chat) return;
-
-            const now = new Date();
-            const time = `\( {now.getHours().toString().padStart(2,'0')}: \){now.getMinutes().toString().padStart(2,'0')}`;
-
-            chat.messages.push({
-                id: Date.now(),
-                text: text,
-                time: time,
-                isMine: true
-            });
-            chat.lastMsg = text.length > 30 ? text.substring(0,27)+'...' : text;
-            chat.time = time;
-
-            saveData();
-            selectChat(currentChatId); // refresh
-            input.value = '';
-
-            // Simulate reply
-            setTimeout(() => {
-                if (currentChatId !== chat.id) return;
-                const replyText = fakeReplies[Math.floor(Math.random() * fakeReplies.length)];
-                const replyTime = `\( {now.getHours().toString().padStart(2,'0')}: \){(now.getMinutes()+1).toString().padStart(2,'0')}`;
-
-                chat.messages.push({
-                    id: Date.now() + 1,
-                    text: replyText,
-                    time: replyTime,
-                    isMine: false
-                });
-                chat.lastMsg = replyText;
-                chat.time = replyTime;
-                saveData();
-                selectChat(currentChatId);
-            }, 1200 + Math.random() * 800);
-        }
-
-        function showNewChatModal() {
-            const container = document.getElementById('contacts-list');
-            container.innerHTML = '';
-            fakeContacts.forEach(contact => {
-                if (chats.find(c => c.name === contact.name)) return;
-                const div = document.createElement('div');
-                div.className = 'flex items-center gap-3 px-6 py-4 hover:bg-zinc-800 cursor-pointer';
-                div.innerHTML = `
-                    <img src="${contact.avatar}" class="w-12 h-12 rounded-2xl">
-                    <div class="font-medium">${contact.name}</div>
-                `;
-                div.onclick = () => {
-                    const newChat = {
-                        id: Date.now(),
-                        name: contact.name,
-                        avatar: contact.avatar,
-                        lastMsg: "Новый чат",
-                        time: "сейчас",
-                        unread: 0,
-                        messages: []
-                    };
-                    chats.unshift(newChat);
-                    saveData();
-                    hideNewChatModal();
-                    selectChat(newChat.id);
-                };
-                container.appendChild(div);
-            });
-            document.getElementById('new-chat-modal').classList.remove('hidden');
-        }
-
-        function hideNewChatModal() {
-            document.getElementById('new-chat-modal').classList.add('hidden');
-        }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('-translate-x-full');
-        }
-
-        // Init
-        window.onload = () => {
-            loadData();
-            // Open first chat by default
-            if (chats.length > 0) selectChat(chats[0].id);
-        };
-    </script>
+  <script src="app.js"></script>
 </body>
 </html>
